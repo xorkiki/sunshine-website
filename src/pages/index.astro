@@ -22,16 +22,8 @@ const projectsJson = JSON.stringify(projects);
 <Base title="Home" description="Sunzhique — Fashion Stylist & Creative Director">
 <div id="root" data-state="default">
 
-  <!-- LEFT -->
-  <div id="left">
-<div id="label-project">
-      <h1 id="proj-title"></h1>
-      <p id="proj-credits"></p>
-      <div id="proj-actions">
-        <button class="action-link" id="btn-back">+ Project list</button>
-      </div>
-    </div>
-  </div>
+  <!-- LEFT (empty column for grid spacing) -->
+  <div id="left"></div>
 
   <!-- IMAGE COLUMN (becomes thumbnail strip in detail state) -->
   <div id="img-col">
@@ -72,9 +64,6 @@ const right       = document.getElementById('right');
 const hoverText   = document.getElementById('hover-text');
 const selectedImg = document.getElementById('selected-img');
 const closeBtn    = document.getElementById('close-btn');
-const btnBack     = document.getElementById('btn-back');
-const projTitle   = document.getElementById('proj-title');
-const projCredits = document.getElementById('proj-credits');
 const htTitle     = document.getElementById('ht-title');
 const htCredits   = document.getElementById('ht-credits');
 const htDesc      = document.getElementById('ht-desc');
@@ -134,10 +123,6 @@ imgCol.addEventListener('click', e => {
   selectedImg.src = images[0];
   selectedImg.alt = project.title;
 
-  // Left panel
-  projTitle.textContent   = project.title;
-  projCredits.textContent = project.credits || 'Photography: Sunzhique';
-
   active = { project, imgIndex: 0 };
 
   root.dataset.state = 'detail';
@@ -170,7 +155,6 @@ function closeDetail() {
 }
 
 closeBtn.addEventListener('click', closeDetail);
-btnBack.addEventListener('click', closeDetail);
 
 // Scroll image col to start slightly above fold
 imgCol.scrollTop = 56;
@@ -205,74 +189,6 @@ imgCol.scrollTop = 56;
   overflow: hidden;
 }
 
-#label-portfolio {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: clamp(3rem, 5vw, 6rem);
-  font-weight: 300;
-  color: #301d10;
-  line-height: 1;
-  transition: opacity 0.35s ease, transform 0.35s ease;
-}
-
-#root[data-state="detail"] #label-portfolio {
-  opacity: 0;
-  transform: translateY(-8px);
-  pointer-events: none;
-}
-
-#label-project {
-  position: absolute;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  opacity: 0;
-  transform: translateY(8px);
-  pointer-events: none;
-  transition: opacity 0.4s ease 0.2s, transform 0.4s ease 0.2s;
-  max-width: calc(100% - 96px);
-}
-
-#root[data-state="detail"] #label-project {
-  opacity: 1;
-  transform: translateY(0);
-  pointer-events: auto;
-}
-
-#proj-title {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: clamp(2.2rem, 4vw, 5rem);
-  font-weight: 300;
-  color: #301d10;
-  line-height: 0.95;
-  margin: 0;
-}
-
-#proj-credits {
-  font-size: 0.7rem;
-  color: #301d10;
-  opacity: 0.5;
-  margin: 0;
-  line-height: 1.6;
-}
-
-#proj-actions {
-  margin-top: 32px;
-}
-
-.action-link {
-  display: block;
-  background: none;
-  border: none;
-  padding: 0;
-  font-size: 0.72rem;
-  color: #301d10;
-  opacity: 0.45;
-  cursor: pointer;
-  letter-spacing: 0.04em;
-  text-align: left;
-  transition: opacity 0.2s;
-}
-.action-link:hover { opacity: 1; color: #a34a21; }
 
 /* ── IMAGE COLUMN ────────────────────────────────── */
 #img-col {
