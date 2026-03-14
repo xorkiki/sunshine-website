@@ -46,7 +46,6 @@ const projectsJson = JSON.stringify(projects);
       <p id="ht-title"></p>
       <p id="ht-credits"></p>
       <p id="ht-desc"></p>
-      <p class="ht-cta">Read the full story</p>
     </div>
     <img id="selected-img" src="" alt="" />
     <button id="close-btn">Close</button>
@@ -80,10 +79,10 @@ imgCol.addEventListener('mouseover', e => {
   htCredits.textContent = item.dataset.credits;
   htDesc.textContent    = item.dataset.desc;
 
-  // Align hover text to top of hovered image
-  const rpTop   = right.getBoundingClientRect().top;
-  const itemTop = item.getBoundingClientRect().top;
-  hoverText.style.top = (itemTop - rpTop) + 'px';
+  // Align hover text to bottom of hovered image
+  const rpTop     = right.getBoundingClientRect().top;
+  const itemBottom = item.getBoundingClientRect().bottom;
+  hoverText.style.top = (itemBottom - rpTop) + 'px';
   hoverText.classList.add('visible');
 });
 
@@ -100,64 +99,58 @@ imgCol.addEventListener('click', e => {
   const project = projects[pi];
 
   if (root.dataset.state === 'detail') {
-    // Clicking a thumbnail switches the selected image
-    selectThumb(item, project.coverUrl);
+    // Switch selected item
+    imgCol.querySelectorAll('.proj-item').forEach(t => t.classList.remove('is-selected'));
+    item.classList.add('is-selected');
+    selectedImg.src = project.coverUrl;
+    selectedImg.alt = project.title;
     return;
   }
 
-  // Open detail: show all images of this project as thumbnails
-  const images = project.images?.length ? project.images : [project.coverUrl];
+  imgCol.querySelectorAll('.proj-item').forEach(t => t.classList.remove('is-selected'));
+  item.classList.add('is-selected');
 
-  // Replace img-col items with this project's images
-  imgCol.innerHTML = '';
-  images.forEach((url, i) => {
-    const div = document.createElement('div');
-    div.className = 'proj-item thumb' + (i === 0 ? ' is-selected' : '');
-    div.dataset.imgUrl = url;
-    div.innerHTML = `<img src="${url}" loading="lazy" decoding="async" alt="" />`;
-    div.addEventListener('click', () => selectThumb(div, url));
-    imgCol.appendChild(div);
-  });
-
-  // Show first image large
-  selectedImg.src = images[0];
+  selectedImg.src = project.coverUrl;
   selectedImg.alt = project.title;
 
-  active = { project, imgIndex: 0 };
-
+  active = { project };
   root.dataset.state = 'detail';
 });
 
-function selectThumb(thumbEl, url) {
-  imgCol.querySelectorAll('.proj-item').forEach(t => t.classList.remove('is-selected'));
-  thumbEl.classList.add('is-selected');
-  selectedImg.src = url;
-}
-
 // ── CLOSE ──────────────────────────────────────────────
 function closeDetail() {
-  root.dataset.state = 'closing';
-  // Restore project list
-  imgCol.innerHTML = '';
-  projects.forEach((p, i) => {
-    const div = document.createElement('div');
-    div.className = 'proj-item';
-    div.dataset.index  = String(i);
-    div.dataset.title  = p.title;
-    div.dataset.credits= p.credits || 'Photography: Sunzhique';
-    div.dataset.desc   = p.description || '';
-    div.innerHTML = `<img src="${p.coverUrl}" loading="lazy" decoding="async" alt="${p.title}" />`;
-    imgCol.appendChild(div);
-  });
+  imgCol.querySelectorAll('.proj-item').forEach(t => t.classList.remove('is-selected'));
   active = null;
-  // Small delay so grid transition plays before re-attaching hover
+  root.dataset.state = 'closing';
   setTimeout(() => { root.dataset.state = 'default'; }, 50);
 }
 
 closeBtn.addEventListener('click', closeDetail);
 
-// Scroll image col to start slightly above fold
-imgCol.scrollTop = 56;
+// Custom scroll — replaces overflow-y:auto so img-col can be overflow:visible
+let scrollOffset = 56;
+function applyScroll() {
+  const max = imgCol.scrollHeight - window.innerHeight;
+  scrollOffset = Math.max(0, Math.min(max, scrollOffset));
+  imgCol.style.transform = `translateY(-${scrollOffset}px)`;
+}
+applyScroll();
+
+imgCol.parentElement.addEventListener('wheel', e => {
+  e.preventDefault();
+  scrollOffset += e.deltaY;
+  applyScroll();
+}, { passive: false });
+
+// Touch scroll
+let touchY = 0;
+imgCol.parentElement.addEventListener('touchstart', e => { touchY = e.touches[0].clientY; }, { passive: true });
+imgCol.parentElement.addEventListener('touchmove', e => {
+  scrollOffset += touchY - e.touches[0].clientY;
+  touchY = e.touches[0].clientY;
+  applyScroll();
+  e.preventDefault();
+}, { passive: false });
 </script>
 
 <style>
@@ -165,17 +158,16 @@ imgCol.scrollTop = 56;
 #root {
   display: grid;
   height: 100vh;
-  overflow: hidden;
 }
 
 #root[data-state="default"],
 #root[data-state="closing"] {
-  grid-template-columns: 40% 20% 40%;
+  grid-template-columns: 20% 10% 70%;
   transition: grid-template-columns 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 #root[data-state="detail"] {
-  grid-template-columns: 30% 7% 63%;
+  grid-template-columns: 20% 5% 75%;
   transition: grid-template-columns 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -186,43 +178,45 @@ imgCol.scrollTop = 56;
   display: flex;
   align-items: center;
   padding: 0 0 0 48px;
-  overflow: hidden;
 }
 
 
 /* ── IMAGE COLUMN ────────────────────────────────── */
 #img-col {
-  overflow-y: auto;
-  overflow-x: hidden;
-  scrollbar-width: none;
+  overflow: visible;
   display: flex;
   flex-direction: column;
   gap: 10px;
   padding-bottom: 80px;
-  height: 100vh;
+  will-change: transform;
 }
-
-#img-col::-webkit-scrollbar { display: none; }
 
 .proj-item {
   cursor: pointer;
   flex-shrink: 0;
-  overflow: hidden;
-  transition: opacity 0.25s ease;
+  position: relative;
+  z-index: 1;
+  padding: 0;
+  transition: padding 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+#root[data-state="default"] .proj-item:hover {
+  padding: 18px 0;
+  z-index: 10;
+}
+
+#root[data-state="default"] .proj-item:hover img {
+  transform: scale(1.3);
 }
 
 .proj-item img {
   width: 100%;
   height: auto;
   display: block;
-  transition: opacity 0.25s ease;
+  transform-origin: center center;
+  transition: transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.25s ease;
 }
 
-/* Thumbnail state */
-#root[data-state="detail"] .proj-item img {
-  aspect-ratio: 4/3;
-  object-fit: cover;
-}
 
 .proj-item:hover { opacity: 0.8; }
 
@@ -236,7 +230,6 @@ imgCol.scrollTop = 56;
 #right {
   position: relative;
   height: 100vh;
-  overflow: hidden;
 }
 
 /* ── HOVER TEXT ──────────────────────────────────── */
@@ -286,14 +279,6 @@ imgCol.scrollTop = 56;
   overflow: hidden;
 }
 
-.ht-cta {
-  font-size: 0.65rem;
-  color: #301d10;
-  opacity: 0.35;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-  margin: 0;
-}
 
 /* ── SELECTED IMAGE ──────────────────────────────── */
 #selected-img {
