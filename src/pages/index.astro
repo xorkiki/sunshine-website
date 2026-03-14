@@ -2,24 +2,6 @@
 import Base from '../layouts/Base.astro';
 import { sanityClient } from '../lib/sanity';
 
-const tempImages = [
-  '/images/251113_Somada-251113_Somada_14_003_HiRes.jpg',
-  '/images/251113_Somada-251113_Somada_14_014_HiRes.jpg',
-  '/images/251113_Somada-251113_Somada_14_026_HiRes.jpg',
-  '/images/251113_Somada-251113_Somada_14_027_HiRes.jpg',
-  '/images/251113_Somada-251113_Somada_14_036_HiRes.jpg',
-  '/images/251113_Somada-251113_Somada_14_055_HiRes.jpg',
-  '/images/251113_Somada-251113_Somada_14_058_HiRes.jpg',
-  '/images/251113_Somada-251113_Somada_14_065_HiRes.jpg',
-  '/images/251113_Somada-251113_Somada_14_067_HiRes.jpg',
-  '/images/251113_Somada-251113_Somada_14_070_HiRes.jpg',
-  '/images/251113_Somada-251113_Somada_14_073_HiRes.jpg',
-  '/images/251113_Somada-251113_Somada_14_079_HiRes.jpg',
-  '/images/251113_Somada-251113_Somada_14_085_HiRes.jpg',
-  '/images/251113_Somada-251113_Somada_14_089_HiRes.jpg',
-  '/images/251113_Somada-251113_Somada_14_091_HiRes.jpg',
-];
-
 let projects: any[] = [];
 try {
   projects = await sanityClient.fetch(`
@@ -29,15 +11,9 @@ try {
       "images": images[].asset->url
     }
   `);
-} catch (e) {}
-
-if (!projects.length) {
-  projects = [
-    { _id: '1', title: 'Somada', description: 'A series exploring form, texture and light across intimate spaces.', credits: 'Photography: Sunzhique', slug: 'somada', coverUrl: tempImages[0], images: tempImages.slice(0, 5) },
-    { _id: '2', title: 'Landscapes', description: 'Quiet moments in open terrain — searching for stillness between sky and earth.', credits: 'Photography: Sunzhique', slug: 'landscapes', coverUrl: tempImages[5], images: tempImages.slice(5, 10) },
-    { _id: '3', title: 'Portraits', description: 'Faces and light. A study in presence and proximity.', credits: 'Photography: Sunzhique', slug: 'portraits', coverUrl: tempImages[10], images: tempImages.slice(10) },
-    { _id: '4', title: 'Urban Studies', description: 'The city as subject — geometry, shadow, and movement in dense urban space.', credits: 'Photography: Sunzhique', slug: 'urban-studies', coverUrl: tempImages[3], images: tempImages.slice(3, 8) },
-  ];
+  console.log('[index] Sanity returned', projects.length, 'items');
+} catch (e: any) {
+  console.error('[index] Sanity fetch failed:', e?.message);
 }
 
 const projectsJson = JSON.stringify(projects);
