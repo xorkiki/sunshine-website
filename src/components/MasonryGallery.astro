@@ -1,0 +1,76 @@
+---
+export interface GalleryImage {
+  _id: string;
+  title?: string;
+  alt?: string;
+  url: string;
+  width?: number;
+  height?: number;
+  order?: number;
+}
+
+export interface Props {
+  images: GalleryImage[];
+}
+
+const { images } = Astro.props;
+---
+
+<!-- PhotoSwipe container -->
+<div id="gallery" class="max-w-[980px] mx-auto px-6 py-10">
+  <!-- Masonry grid via CSS columns -->
+  <div
+    id="masonry-grid"
+    class="masonry-grid"
+    style="columns: 3; column-gap: 12px;"
+  >
+    {images.map((img, i) => (
+      <a
+        class="masonry-item pswp-gallery-item"
+        href={img.url}
+        data-pswp-width={img.width || 1200}
+        data-pswp-height={img.height || 800}
+        data-index={i}
+        target="_blank"
+        rel="noreferrer"
+      >
+        <img
+          src={img.url + '?w=600&auto=format&fit=max'}
+          alt={img.alt || img.title || 'Gallery image'}
+          loading={i < 6 ? 'eager' : 'lazy'}
+          decoding="async"
+        />
+      </a>
+    ))}
+  </div>
+</div>
+
+<script>
+  import PhotoSwipeLightbox from 'photoswipe/lightbox';
+  import 'photoswipe/style.css';
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const lightbox = new PhotoSwipeLightbox({
+      gallery: '#masonry-grid',
+      children: 'a.pswp-gallery-item',
+      pswpModule: () => import('photoswipe'),
+      bgOpacity: 0.92,
+      showHideOpacity: true,
+      zoom: false,
+    });
+    lightbox.init();
+  });
+</script>
+
+<style>
+  @media (max-width: 640px) {
+    #masonry-grid {
+      columns: 2 !important;
+    }
+  }
+  @media (max-width: 420px) {
+    #masonry-grid {
+      columns: 1 !important;
+    }
+  }
+</style>

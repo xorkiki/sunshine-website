@@ -1,0 +1,82 @@
+---
+import Base from '../layouts/Base.astro';
+import ProjectCard from '../components/ProjectCard.astro';
+import { sanityClient } from '../lib/sanity';
+
+let projects: any[] = [];
+
+try {
+  projects = await sanityClient.fetch(`
+    *[_type == "portfolioItem"] | order(_createdAt desc) {
+      _id,
+      title,
+      description,
+      slug,
+      tags,
+      "imageUrl": coverImage.asset->url
+    }
+  `);
+} catch (e) {
+  // Placeholder projects
+  projects = [
+    {
+      _id: '1',
+      title: 'Landscapes of Yunnan',
+      description: 'A journey through the mountains and valleys of Southwest China, photographed over three weeks.',
+      slug: { current: 'landscapes-of-yunnan' },
+      tags: ['Documentary', 'Landscape'],
+      imageUrl: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600',
+    },
+    {
+      _id: '2',
+      title: 'Urban Studies',
+      description: 'Street photography from Shanghai, Beijing, and Hong Kong exploring the rhythm of city life.',
+      slug: { current: 'urban-studies' },
+      tags: ['Street', 'Documentary'],
+      imageUrl: 'https://images.unsplash.com/photo-1470770841072-f978cf4d019e?w=600',
+    },
+    {
+      _id: '3',
+      title: 'Portraits',
+      description: 'A collection of portrait work shot on medium format film.',
+      slug: { current: 'portraits' },
+      tags: ['Portraits', 'Film'],
+      imageUrl: 'https://images.unsplash.com/photo-1552374196-c4e7ffc6e126?w=600',
+    },
+  ];
+}
+---
+
+<Base title="Portfolio" description="Portfolio of Sunzhique">
+  <div class="max-w-[980px] mx-auto px-6 py-16">
+    <!-- Heading -->
+    <h1
+      class="text-5xl font-light mb-2 tracking-wide"
+      style="font-family: 'Cormorant Garamond', serif; color: #301d10;"
+    >
+      Portfolio
+    </h1>
+    <p class="text-sm tracking-widest uppercase mb-12" style="color: #a34a21; letter-spacing: 0.15em;">
+      Selected Works
+    </p>
+
+    <!-- Grid -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+      {projects.map((project) => (
+        <ProjectCard
+          title={project.title}
+          description={project.description}
+          imageUrl={project.imageUrl}
+          slug={project.slug?.current || project._id}
+          tags={project.tags}
+        />
+      ))}
+    </div>
+
+    {projects.length === 0 && (
+      <p class="text-center py-20" style="color: #301d10; opacity: 0.4; font-style: italic; font-family: 'Cormorant Garamond', serif; font-size: 1.2rem;">
+        Portfolio coming soon.
+      </p>
+    )}
+  </div>
+</Base>

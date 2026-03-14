@@ -1,0 +1,22 @@
+{
+  "name": "sun-website",
+  "type": "module",
+  "version": "0.0.1",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "@sanity/client": "^7.17.0",
+    "@tailwindcss/vite": "^4.2.1",
+    "astro": "^6.0.4",
+    "masonry-layout": "^4.2.2",
+    "photoswipe": "^5.4.4",
+    "tailwindcss": "^4.2.1"
+  }
+}

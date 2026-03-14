@@ -1,0 +1,449 @@
+---
+import Base from '../layouts/Base.astro';
+import { sanityClient } from '../lib/sanity';
+
+const tempImages = [
+  '/images/251113_Somada-251113_Somada_14_003_HiRes.jpg',
+  '/images/251113_Somada-251113_Somada_14_014_HiRes.jpg',
+  '/images/251113_Somada-251113_Somada_14_026_HiRes.jpg',
+  '/images/251113_Somada-251113_Somada_14_027_HiRes.jpg',
+  '/images/251113_Somada-251113_Somada_14_036_HiRes.jpg',
+  '/images/251113_Somada-251113_Somada_14_055_HiRes.jpg',
+  '/images/251113_Somada-251113_Somada_14_058_HiRes.jpg',
+  '/images/251113_Somada-251113_Somada_14_065_HiRes.jpg',
+  '/images/251113_Somada-251113_Somada_14_067_HiRes.jpg',
+  '/images/251113_Somada-251113_Somada_14_070_HiRes.jpg',
+  '/images/251113_Somada-251113_Somada_14_073_HiRes.jpg',
+  '/images/251113_Somada-251113_Somada_14_079_HiRes.jpg',
+  '/images/251113_Somada-251113_Somada_14_085_HiRes.jpg',
+  '/images/251113_Somada-251113_Somada_14_089_HiRes.jpg',
+  '/images/251113_Somada-251113_Somada_14_091_HiRes.jpg',
+];
+
+let projects: any[] = [];
+try {
+  projects = await sanityClient.fetch(`
+    *[_type == "portfolioItem" && "photography" in category] | order(_createdAt desc) {
+      _id, title, description, "slug": slug.current,
+      "coverUrl": coverImage.asset->url,
+      "images": images[].asset->url
+    }
+  `);
+} catch (e) {}
+
+if (!projects.length) {
+  projects = [
+    { _id: '1', title: 'Somada', description: 'A series exploring form, texture and light across intimate spaces.', credits: 'Photography: Sunzhique', slug: 'somada', coverUrl: tempImages[0], images: tempImages.slice(0, 5) },
+    { _id: '2', title: 'Landscapes', description: 'Quiet moments in open terrain — searching for stillness between sky and earth.', credits: 'Photography: Sunzhique', slug: 'landscapes', coverUrl: tempImages[5], images: tempImages.slice(5, 10) },
+    { _id: '3', title: 'Portraits', description: 'Faces and light. A study in presence and proximity.', credits: 'Photography: Sunzhique', slug: 'portraits', coverUrl: tempImages[10], images: tempImages.slice(10) },
+    { _id: '4', title: 'Urban Studies', description: 'The city as subject — geometry, shadow, and movement in dense urban space.', credits: 'Photography: Sunzhique', slug: 'urban-studies', coverUrl: tempImages[3], images: tempImages.slice(3, 8) },
+  ];
+}
+
+const projectsJson = JSON.stringify(projects);
+---
+
+<Base title="Photography" description="Photography by Sunzhique">
+<div id="root" class="state-default">
+
+  <!-- LEFT -->
+  <div id="left">
+<div id="label-project">
+      <h1 id="proj-title"></h1>
+      <p id="proj-credits"></p>
+      <div id="proj-actions">
+        <button class="action-link" id="btn-back">+ Project list</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- IMAGE COLUMN (becomes thumbnail strip in detail state) -->
+  <div id="img-col">
+    {projects.map((p, i) => (
+      <div
+        class="proj-item"
+        data-index={String(i)}
+        data-title={p.title}
+        data-credits={p.credits || 'Photography: Sunzhique'}
+        data-desc={p.description || ''}
+      >
+        <img src={p.coverUrl} alt={p.title} loading={i < 3 ? 'eager' : 'lazy'} decoding="async" />
+      </div>
+    ))}
+  </div>
+
+  <!-- RIGHT: hover text or selected image -->
+  <div id="right">
+    <div id="hover-text">
+      <p id="ht-title"></p>
+      <p id="ht-credits"></p>
+      <p id="ht-desc"></p>
+      <p class="ht-cta">Read the full story</p>
+    </div>
+    <img id="selected-img" src="" alt="" />
+    <button id="close-btn">Close</button>
+  </div>
+
+</div>
+</Base>
+
+<script define:vars={{ projectsJson }}>
+const projects = JSON.parse(projectsJson);
+
+const root        = document.getElementById('root');
+const imgCol      = document.getElementById('img-col');
+const right       = document.getElementById('right');
+const hoverText   = document.getElementById('hover-text');
+const selectedImg = document.getElementById('selected-img');
+const closeBtn    = document.getElementById('close-btn');
+const btnBack     = document.getElementById('btn-back');
+const projTitle   = document.getElementById('proj-title');
+const projCredits = document.getElementById('proj-credits');
+const htTitle     = document.getElementById('ht-title');
+const htCredits   = document.getElementById('ht-credits');
+const htDesc      = document.getElementById('ht-desc');
+
+let active = null; // { project, imgIndex }
+
+// ── HOVER (default state only) ─────────────────────────
+imgCol.addEventListener('mouseover', e => {
+  if (root.dataset.state !== 'default') return;
+  const item = e.target.closest('.proj-item');
+  if (!item) { hoverText.classList.remove('visible'); return; }
+
+  htTitle.textContent   = item.dataset.title;
+  htCredits.textContent = item.dataset.credits;
+  htDesc.textContent    = item.dataset.desc;
+
+  // Align hover text to top of hovered image
+  const rpTop   = right.getBoundingClientRect().top;
+  const itemTop = item.getBoundingClientRect().top;
+  hoverText.style.top = (itemTop - rpTop) + 'px';
+  hoverText.classList.add('visible');
+});
+
+imgCol.addEventListener('mouseleave', () => {
+  hoverText.classList.remove('visible');
+});
+
+// ── CLICK ──────────────────────────────────────────────
+imgCol.addEventListener('click', e => {
+  const item = e.target.closest('.proj-item');
+  if (!item) return;
+
+  const pi = parseInt(item.dataset.index);
+  const project = projects[pi];
+
+  if (root.dataset.state === 'detail') {
+    // Clicking a thumbnail switches the selected image
+    selectThumb(item, project.coverUrl);
+    return;
+  }
+
+  // Open detail: show all images of this project as thumbnails
+  const images = project.images?.length ? project.images : [project.coverUrl];
+
+  // Replace img-col items with this project's images
+  imgCol.innerHTML = '';
+  images.forEach((url, i) => {
+    const div = document.createElement('div');
+    div.className = 'proj-item thumb' + (i === 0 ? ' is-selected' : '');
+    div.dataset.imgUrl = url;
+    div.innerHTML = `<img src="${url}" loading="lazy" decoding="async" alt="" />`;
+    div.addEventListener('click', () => selectThumb(div, url));
+    imgCol.appendChild(div);
+  });
+
+  // Show first image large
+  selectedImg.src = images[0];
+  selectedImg.alt = project.title;
+
+  // Left panel
+  projTitle.textContent   = project.title;
+  projCredits.textContent = project.credits || 'Photography: Sunzhique';
+
+  active = { project, imgIndex: 0 };
+
+  root.dataset.state = 'detail';
+});
+
+function selectThumb(thumbEl, url) {
+  imgCol.querySelectorAll('.proj-item').forEach(t => t.classList.remove('is-selected'));
+  thumbEl.classList.add('is-selected');
+  selectedImg.src = url;
+}
+
+// ── CLOSE ──────────────────────────────────────────────
+function closeDetail() {
+  root.dataset.state = 'closing';
+  // Restore project list
+  imgCol.innerHTML = '';
+  projects.forEach((p, i) => {
+    const div = document.createElement('div');
+    div.className = 'proj-item';
+    div.dataset.index  = String(i);
+    div.dataset.title  = p.title;
+    div.dataset.credits= p.credits || 'Photography: Sunzhique';
+    div.dataset.desc   = p.description || '';
+    div.innerHTML = `<img src="${p.coverUrl}" loading="lazy" decoding="async" alt="${p.title}" />`;
+    imgCol.appendChild(div);
+  });
+  active = null;
+  // Small delay so grid transition plays before re-attaching hover
+  setTimeout(() => { root.dataset.state = 'default'; }, 50);
+}
+
+closeBtn.addEventListener('click', closeDetail);
+btnBack.addEventListener('click', closeDetail);
+
+// Scroll image col to start slightly above fold
+imgCol.scrollTop = 56;
+</script>
+
+<style>
+/* ── ROOT GRID ───────────────────────────────────── */
+#root {
+  display: grid;
+  height: 100vh;
+  overflow: hidden;
+}
+
+#root[data-state="default"],
+#root[data-state="closing"] {
+  grid-template-columns: 40% 20% 40%;
+  transition: grid-template-columns 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+#root[data-state="detail"] {
+  grid-template-columns: 30% 7% 63%;
+  transition: grid-template-columns 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ── LEFT ────────────────────────────────────────── */
+#left {
+  position: relative;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  padding: 0 0 0 48px;
+  overflow: hidden;
+}
+
+#label-portfolio {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(3rem, 5vw, 6rem);
+  font-weight: 300;
+  color: #301d10;
+  line-height: 1;
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+
+#root[data-state="detail"] #label-portfolio {
+  opacity: 0;
+  transform: translateY(-8px);
+  pointer-events: none;
+}
+
+#label-project {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  opacity: 0;
+  transform: translateY(8px);
+  pointer-events: none;
+  transition: opacity 0.4s ease 0.2s, transform 0.4s ease 0.2s;
+  max-width: calc(100% - 96px);
+}
+
+#root[data-state="detail"] #label-project {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+#proj-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(2.2rem, 4vw, 5rem);
+  font-weight: 300;
+  color: #301d10;
+  line-height: 0.95;
+  margin: 0;
+}
+
+#proj-credits {
+  font-size: 0.7rem;
+  color: #301d10;
+  opacity: 0.5;
+  margin: 0;
+  line-height: 1.6;
+}
+
+#proj-actions {
+  margin-top: 32px;
+}
+
+.action-link {
+  display: block;
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 0.72rem;
+  color: #301d10;
+  opacity: 0.45;
+  cursor: pointer;
+  letter-spacing: 0.04em;
+  text-align: left;
+  transition: opacity 0.2s;
+}
+.action-link:hover { opacity: 1; color: #a34a21; }
+
+/* ── IMAGE COLUMN ────────────────────────────────── */
+#img-col {
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-bottom: 80px;
+  height: 100vh;
+}
+
+#img-col::-webkit-scrollbar { display: none; }
+
+.proj-item {
+  cursor: pointer;
+  flex-shrink: 0;
+  overflow: hidden;
+  transition: opacity 0.25s ease;
+}
+
+.proj-item img {
+  width: 100%;
+  height: auto;
+  display: block;
+  transition: opacity 0.25s ease;
+}
+
+/* Thumbnail state */
+#root[data-state="detail"] .proj-item img {
+  aspect-ratio: 4/3;
+  object-fit: cover;
+}
+
+.proj-item:hover { opacity: 0.8; }
+
+.proj-item.is-selected {
+  outline: 1.5px solid #a34a21;
+  outline-offset: -1px;
+  opacity: 1;
+}
+
+/* ── RIGHT ───────────────────────────────────────── */
+#right {
+  position: relative;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* ── HOVER TEXT ──────────────────────────────────── */
+#hover-text {
+  position: absolute;
+  top: 0;
+  left: 28px;
+  width: 200px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  z-index: 2;
+}
+
+#hover-text.visible { opacity: 1; }
+
+#root[data-state="detail"] #hover-text,
+#root[data-state="closing"] #hover-text { display: none; }
+
+#ht-title {
+  font-size: 0.88rem;
+  font-weight: 400;
+  color: #301d10;
+  margin: 0;
+}
+
+#ht-credits {
+  font-size: 0.7rem;
+  color: #301d10;
+  opacity: 0.5;
+  margin: 0;
+  line-height: 1.5;
+}
+
+#ht-desc {
+  font-size: 0.7rem;
+  line-height: 1.7;
+  color: #301d10;
+  opacity: 0.55;
+  margin: 6px 0 8px;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.ht-cta {
+  font-size: 0.65rem;
+  color: #301d10;
+  opacity: 0.35;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  margin: 0;
+}
+
+/* ── SELECTED IMAGE ──────────────────────────────── */
+#selected-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+  padding: 32px 24px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.45s ease;
+}
+
+#root[data-state="detail"] #selected-img {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* ── CLOSE BTN ───────────────────────────────────── */
+#close-btn {
+  position: fixed;
+  top: 20px;
+  right: 28px;
+  background: none;
+  border: none;
+  font-size: 0.65rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: #301d10;
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease 0.3s;
+  z-index: 200;
+}
+
+#close-btn:hover { opacity: 0.6 !important; }
+
+#root[data-state="detail"] #close-btn {
+  opacity: 0.4;
+  pointer-events: auto;
+}
+</style>

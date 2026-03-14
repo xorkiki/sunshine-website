@@ -1,0 +1,79 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --color-rust: #a34a21;
+  --color-cream: #f8f4f1;
+  --color-brown: #301d10;
+  --color-rust-light: #c4694a;
+  --color-cream-dark: #ede7e0;
+  --font-serif: 'Cormorant Garamond', Georgia, serif;
+  --font-sans: 'DIN Next', 'DIN', ui-sans-serif, system-ui, sans-serif;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--color-cream);
+  color: var(--color-brown);
+  font-family: var(--font-sans);
+  margin: 0;
+  padding: 0;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-serif);
+  font-weight: 400;
+}
+
+/* Page transition */
+.page-transition {
+  animation: fadeSlideIn 0.6s ease forwards;
+}
+
+@keyframes fadeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* PhotoSwipe custom overrides */
+.pswp {
+  --pswp-bg: #301d10;
+}
+
+/* Masonry grid */
+.masonry-grid {
+  column-gap: 12px;
+}
+
+.masonry-item {
+  break-inside: avoid;
+  margin-bottom: 12px;
+  cursor: pointer;
+  overflow: hidden;
+  border-radius: 2px;
+}
+
+.masonry-item img {
+  width: 100%;
+  height: auto;
+  display: block;
+  transition: transform 0.4s ease, opacity 0.3s ease;
+}
+
+.masonry-item:hover img {
+  transform: scale(1.03);
+  opacity: 0.92;
+}

@@ -1,0 +1,121 @@
+---
+import Base from '../../layouts/Base.astro';
+import { sanityClient } from '../../lib/sanity';
+
+export async function getStaticPaths() {
+  let projects: any[] = [];
+  try {
+    projects = await sanityClient.fetch(`
+      *[_type == "portfolioItem"] {
+        "slug": slug.current,
+        _id
+      }
+    `);
+  } catch (e) {
+    // Placeholder slugs for dev
+    projects = [
+      { slug: 'landscapes-of-yunnan', _id: '1' },
+      { slug: 'urban-studies', _id: '2' },
+      { slug: 'portraits', _id: '3' },
+    ];
+  }
+
+  return projects.map((p: any) => ({
+    params: { slug: p.slug || p._id },
+  }));
+}
+
+const { slug } = Astro.params;
+
+let project: any = null;
+
+try {
+  project = await sanityClient.fetch(`
+    *[_type == "portfolioItem" && slug.current == $slug][0] {
+      title,
+      description,
+      tags,
+      "coverUrl": coverImage.asset->url,
+      "images": images[].asset->url
+    }
+  `, { slug });
+} catch (e) {
+  // Placeholder
+}
+
+// Fallback data
+const title = project?.title || slug?.replace(/-/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()) || 'Project';
+const description = project?.description || '';
+const images: string[] = project?.images || (project?.coverUrl ? [project.coverUrl] : [
+  'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1200',
+]);
+const tags: string[] = project?.tags || [];
+---
+
+<Base title={title} description={description}>
+  <div class="max-w-[980px] mx-auto px-6 py-12">
+    <!-- Back link -->
+    <a
+      href="/portfolio"
+      class="inline-flex items-center gap-2 text-xs tracking-widest uppercase mb-10 transition-colors"
+      style="color: #a34a21; letter-spacing: 0.15em;"
+    >
+      <span>&larr;</span> Back to Portfolio
+    </a>
+
+    <!-- Title -->
+    <h1
+      class="text-5xl font-light mb-3"
+      style="font-family: 'Cormorant Garamond', serif; color: #301d10;"
+    >
+      {title}
+    </h1>
+
+    {tags.length > 0 && (
+      <div class="flex flex-wrap gap-2 mb-6">
+        {tags.map((tag: string) => (
+          <span
+            class="text-xs px-2 py-1 border"
+            style="border-color: #a34a21; color: #a34a21; letter-spacing: 0.08em;"
+          >
+            {tag}
+          </span>
+        ))}
+      </div>
+    )}
+
+    {description && (
+      <p class="text-lg mb-12 max-w-2xl leading-relaxed" style="color: #301d10; opacity: 0.75; font-family: 'Cormorant Garamond', serif;">
+        {description}
+      </p>
+    )}
+
+    <!-- Full-width primary image -->
+    {images[0] && (
+      <div class="w-full mb-4 rounded-sm overflow-hidden">
+        <img
+          src={images[0] + '?w=1200&auto=format'}
+          alt={title}
+          class="w-full h-auto"
+          loading="eager"
+        />
+      </div>
+    )}
+
+    <!-- Additional images grid -->
+    {images.length > 1 && (
+      <div class="grid grid-cols-2 gap-3 mt-4">
+        {images.slice(1).map((url: string, i: number) => (
+          <div class="overflow-hidden rounded-sm">
+            <img
+              src={url + '?w=700&auto=format'}
+              alt={`${title} ${i + 2}`}
+              class="w-full h-auto"
+              loading="lazy"
+            />
+          </div>
+        ))}
+      </div>
+    )}
+  </div>
+</Base>

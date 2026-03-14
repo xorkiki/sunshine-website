@@ -1,0 +1,133 @@
+---
+import '../styles/global.css';
+
+export interface Props {
+  title?: string;
+  description?: string;
+  hideName?: boolean;
+}
+
+const { title = 'Sunzhique', description = 'Photography & Portfolio', hideName = false } = Astro.props;
+const currentPath = Astro.url.pathname;
+---
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>{title} — Sunzhique</title>
+    <meta property="og:title" content={`${title} — Sunzhique`} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content="/og-image.svg" />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="/og-image.svg" />
+  </head>
+  <body>
+
+    <nav id="site-nav">
+      {!hideName && (
+        <a href="/" class="nav-name">Sunzhique</a>
+      )}
+      {hideName && <span class="nav-name-placeholder" />}
+
+      <div class="nav-links">
+        <a href="/styling" class={`nav-link ${currentPath === '/styling' ? 'active' : ''}`}>Styling</a>
+        <a href="/photography" class={`nav-link ${currentPath === '/photography' ? 'active' : ''}`}>Photography</a>
+        <a href="/about" class={`nav-link ${currentPath === '/about' ? 'active' : ''}`}>About</a>
+      </div>
+    </nav>
+
+    <main>
+      <slot />
+    </main>
+
+  </body>
+</html>
+
+<style>
+  body {
+    background-color: #f8f4f1;
+    color: #301d10;
+    margin: 0;
+    overflow: hidden;
+    height: 100vh;
+  }
+
+  main {
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  /* ── NAV ─────────────────────────────────────── */
+  #site-nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    padding: 20px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    pointer-events: none;
+  }
+
+  .nav-name {
+    font-family: ui-sans-serif, system-ui, sans-serif;
+    font-weight: 600;
+    font-size: 1.05rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    text-decoration: none;
+    color: #301d10;
+    pointer-events: auto;
+    white-space: nowrap;
+  }
+
+  .nav-name-placeholder {
+    display: block;
+  }
+
+  .nav-links {
+    display: flex;
+    align-items: center;
+    gap: 36px;
+    pointer-events: auto;
+  }
+
+  .nav-link {
+    font-family: ui-sans-serif, system-ui, sans-serif;
+    font-size: 0.68rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    text-decoration: none;
+    font-weight: 400;
+    color: #301d10;
+    opacity: 0.55;
+    white-space: nowrap;
+    transition: opacity 0.2s;
+  }
+
+  .nav-link:hover { opacity: 1; }
+  .nav-link.active { opacity: 1; }
+
+  /* ── RESPONSIVE ──────────────────────────────── */
+
+  @media (max-width: 720px) and (min-width: 541px) {
+    .nav-links { gap: 20px; }
+    .nav-link { font-size: 0.62rem; }
+  }
+
+  @media (max-width: 540px) {
+    #site-nav { align-items: flex-start; }
+    .nav-links {
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 8px;
+    }
+  }
+</style>

@@ -1,0 +1,54 @@
+---
+export interface Props {
+  title: string;
+  description?: string;
+  imageUrl?: string;
+  slug: string;
+  tags?: string[];
+}
+
+const { title, description, imageUrl, slug, tags } = Astro.props;
+---
+
+<a
+  href={`/fullscreen/${slug}`}
+  class="group block overflow-hidden rounded-sm transition-shadow hover:shadow-lg"
+  style="text-decoration: none; color: inherit;"
+>
+  {imageUrl && (
+    <div class="overflow-hidden aspect-[4/3] bg-cream-dark">
+      <img
+        src={imageUrl + '?w=600&auto=format&fit=max'}
+        alt={title}
+        loading="lazy"
+        decoding="async"
+        class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+      />
+    </div>
+  )}
+  <div class="pt-4 pb-2">
+    <h3
+      class="text-xl mb-1"
+      style="font-family: 'Cormorant Garamond', serif; font-weight: 400; color: #301d10;"
+    >
+      {title}
+    </h3>
+    {description && (
+      <p class="text-sm leading-relaxed line-clamp-2" style="color: #301d10; opacity: 0.7;">
+        {description}
+      </p>
+    )}
+    {tags && tags.length > 0 && (
+      <div class="flex flex-wrap gap-2 mt-3">
+        {tags.map(tag => (
+          <span
+            class="text-xs px-2 py-1 border"
+            style="border-color: #a34a21; color: #a34a21; letter-spacing: 0.08em;"
+          >
+            {tag}
+          </span>
+        ))}
+      </div>
+    )}
+  </div>
+</a>

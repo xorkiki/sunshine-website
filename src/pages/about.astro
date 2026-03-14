@@ -1,0 +1,168 @@
+---
+import Base from '../layouts/Base.astro';
+import { sanityClient } from '../lib/sanity';
+
+let about: any = null;
+try {
+  about = await sanityClient.fetch(`
+    *[_type == "aboutPage"][0] {
+      name, bio, clients,
+      "headshotUrl": headshot.asset->url,
+    }
+  `);
+} catch (e) {}
+
+const headshotUrl = about?.headshotUrl || '/images/portrait.jpg';
+const clients: string[] = about?.clients || ['DKNY', 'COACH', 'NIKE', 'HELMUT LANG', 'JOHN ELLIOTT'];
+const bio = about?.bio || 'PHOTOGRAPHER AND VISUAL ARTIST BASED IN NYC';
+---
+
+<Base title="About" description="About Sunzhique">
+<div id="about-page">
+
+  <!-- TOP LEFT: descriptor -->
+  <div id="descriptor">
+    FASHION STYLIST AND CREATIVE<br/>
+    DIRECTOR BASED IN NEW YORK<br/>
+    ORIGINALLY FROM KAZAKHSTAN
+  </div>
+
+  <!-- TOP RIGHT: quote -->
+  <div id="quote-block">
+    <p>CLIENTS</p>
+    <p>&nbsp;</p>
+    {clients.map((c: string) => <p>{c.toUpperCase()}</p>)}
+  </div>
+
+  <!-- MID LEFT: links -->
+  <div id="links-block">
+    <a href="https://instagram.com" target="_blank" rel="noreferrer" class="about-link">INSTAGRAM</a>
+    <a href="mailto:contactsunzhique@gmail.com" class="about-link">EMAIL</a>
+    <a href="/" class="about-link">PORTFOLIO</a>
+  </div>
+
+  <!-- PORTRAIT -->
+  <div id="portrait">
+    <img src={headshotUrl} alt="Sunzhique" />
+  </div>
+
+  <!-- BOTTOM BAR -->
+  <div id="bottom-bar">
+    <span>2026</span>
+    <span>DJ</span>
+    <span>STYLIST</span>
+    <span>PHOTOGRAPHER</span>
+  </div>
+
+</div>
+</Base>
+
+<style>
+  #about-page {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    background-color: #f8f4f1;
+  }
+
+  /* ── DESCRIPTOR ──────────────────────────── */
+  #descriptor {
+    position: absolute;
+    top: 68px;
+    left: 32px;
+    width: 210px;
+    font-family: ui-sans-serif, system-ui, sans-serif;
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    line-height: 1.4;
+    color: #301d10;
+    opacity: 0.65;
+    text-align: justify;
+    text-align-last: justify;
+  }
+
+  /* ── QUOTE ────────────────────────────────── */
+  #quote-block {
+    position: absolute;
+    top: 28%;
+    right: 32px;
+    text-align: right;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+
+  #quote-block p {
+    font-size: 0.68rem;
+    letter-spacing: 0.12em;
+    color: #301d10;
+    opacity: 0.6;
+    margin: 0;
+    line-height: 1.4;
+    font-family: ui-sans-serif, system-ui, sans-serif;
+  }
+
+  /* ── LINKS ────────────────────────────────── */
+  #links-block {
+    position: absolute;
+    top: 55%;
+    left: 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .about-link {
+    font-size: 0.68rem;
+    letter-spacing: 0.15em;
+    color: #301d10;
+    opacity: 0.55;
+    text-decoration: none;
+    font-family: ui-sans-serif, system-ui, sans-serif;
+    transition: opacity 0.2s;
+    display: block;
+  }
+
+  .about-link:hover { opacity: 1; }
+
+  /* ── PORTRAIT ─────────────────────────────── */
+  #portrait {
+    position: absolute;
+    top: 48%;
+    left: 57%;
+    width: 13vw;
+    min-width: 120px;
+    max-width: 180px;
+  }
+
+  #portrait img {
+    width: 100%;
+    height: auto;
+    display: block;
+    filter: grayscale(20%);
+  }
+
+  /* ── BOTTOM BAR ───────────────────────────── */
+  #bottom-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    padding: 0 32px;
+    gap: 0;
+    justify-content: space-between;
+  }
+
+  #bottom-bar span {
+    font-size: 0.68rem;
+    letter-spacing: 0.12em;
+    color: #301d10;
+    opacity: 0.5;
+    font-family: ui-sans-serif, system-ui, sans-serif;
+  }
+
+</style>
