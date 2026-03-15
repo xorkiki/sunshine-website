@@ -56,8 +56,8 @@ const currentPath = Astro.url.pathname;
 
 <style>
   body {
-    background-color: var(--color-cream);
-    color: var(--color-brown);
+    background-color: #f8f4f1;
+    color: #301d10;
     margin: 0;
     overflow: hidden;
     height: 100vh;
@@ -75,21 +75,22 @@ const currentPath = Astro.url.pathname;
     left: 0;
     right: 0;
     z-index: 100;
-    padding: var(--spacing-2xl) var(--spacing-5xl);
+    padding: 20px 32px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     pointer-events: none;
+    background-color: transparent;
   }
 
   .nav-name {
-    font-family: var(--font-sans);
+    font-family: ui-sans-serif, system-ui, sans-serif;
     font-weight: 600;
-    font-size: var(--font-size-3xl);
-    letter-spacing: var(--letter-spacing-wider);
+    font-size: 1.05rem;
+    letter-spacing: 0.18em;
     text-transform: uppercase;
     text-decoration: none;
-    color: var(--color-brown);
+    color: #301d10;
     pointer-events: auto;
     white-space: nowrap;
   }
@@ -98,16 +99,17 @@ const currentPath = Astro.url.pathname;
     writing-mode: vertical-lr;
     text-orientation: upright;
     position: fixed;
-    left: var(--spacing-5xl);
-    top: var(--spacing-2xl);
-    font-family: var(--font-sans);
+    left: 32px;
+    top: 20px;
+    font-family: ui-sans-serif, system-ui, sans-serif;
     font-weight: 600;
     font-size: 0.78rem;
-    letter-spacing: var(--letter-spacing-wider);
+    letter-spacing: 0.18em;
     text-transform: uppercase;
     text-decoration: none;
-    color: var(--color-brown);
+    color: #301d10;
     pointer-events: auto;
+    z-index: 100;
   }
 
   .nav-name-placeholder {
@@ -117,39 +119,69 @@ const currentPath = Astro.url.pathname;
   .nav-links {
     display: flex;
     align-items: center;
-    gap: var(--spacing-6xl);
+    gap: 36px;
     pointer-events: auto;
+    position: relative;
   }
 
   .nav-link {
-    font-family: var(--font-sans);
-    font-size: var(--font-size-md);
-    letter-spacing: var(--letter-spacing-normal);
+    font-family: ui-sans-serif, system-ui, sans-serif;
+    font-size: 0.62rem;
+    letter-spacing: 0.12em;
     text-transform: uppercase;
     text-decoration: none;
     font-weight: 400;
-    color: var(--color-brown);
-    opacity: var(--opacity-muted);
+    color: #301d10;
+    opacity: 0.4;
     white-space: nowrap;
     transition: opacity 0.2s;
   }
 
-  .nav-link:hover { opacity: var(--opacity-prominent); }
-  .nav-link.active { opacity: var(--opacity-prominent); }
+  .nav-link:hover { opacity: 0.9; }
+  .nav-link.active { opacity: 0.9; }
 
   /* ── RESPONSIVE ──────────────────────────────── */
 
   @media (max-width: 720px) and (min-width: 541px) {
-    .nav-links { gap: var(--spacing-2xl); }
-    .nav-link { font-size: var(--font-size-md); }
+    .nav-links { gap: 20px; }
+    .nav-link { font-size: 0.62rem; }
   }
 
   @media (max-width: 540px) {
-    #site-nav { align-items: flex-start; }
+    #site-nav {
+      align-items: flex-start;
+      padding: 12px 16px;
+      background-color: #f8f4f1;
+      box-sizing: border-box;
+      width: 100%;
+      left: 0;
+      right: 0;
+    }
     .nav-links {
       flex-direction: column;
       align-items: flex-end;
-      gap: var(--spacing-md);
+      gap: 4px;
+      margin: 0;
+      padding: 0;
+      flex-shrink: 0;
+    }
+    .nav-name {
+      font-size: 0.8rem;
+      flex-shrink: 0;
+      line-height: 1.2;
+      margin: 0;
+    }
+    .nav-link {
+      font-size: 0.52rem;
+      line-height: 1.2;
+      padding: 0;
+      margin: 0;
+      display: block;
+    }
+    .nav-name-vertical {
+      left: 12px;
+      top: 12px;
+      font-size: 0.65rem;
     }
   }
 </style>
