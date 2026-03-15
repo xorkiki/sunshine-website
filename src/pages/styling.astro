@@ -153,7 +153,7 @@ closeBtn.addEventListener('click', closeDetail);
   overflow-y: auto;
   overflow-x: hidden;
   scrollbar-width: none;
-  padding: 80px 24px 100px 72px;
+  padding: 20px 24px 100px 72px;
   box-sizing: border-box;
   width: 100%;
   max-width: 100%;
@@ -392,29 +392,43 @@ closeBtn.addEventListener('click', closeDetail);
 @media (max-width: 1280px) {
   #grid-view { grid-template-columns: 1fr 130px; }
   #grid { grid-template-columns: repeat(6, 1fr); gap: 52px 20px; }
+  .side-link { font-size: 0.6rem; }
+  .v-char { font-size: 0.6rem; }
 }
 
 @media (max-width: 1024px) {
-  #grid-view { grid-template-columns: 1fr 120px; }
+  #grid-view { grid-template-columns: 1fr 130px; }
   #grid { grid-template-columns: repeat(5, 1fr); gap: 44px 18px; }
-  #grid-scroll { padding: 72px 20px 80px 48px; }
-  #sidebar { padding: 72px 20px 32px 12px; }
+  #grid-scroll { padding: 20px 20px 80px 48px; }
+  #sidebar { padding: 20px 20px 32px 12px; }
+  .side-link { font-size: 0.58rem; }
+  .v-char { font-size: 0.58rem; }
+  .clients-label, .client-name { font-size: 0.48rem; }
 }
 
 @media (max-width: 768px) {
-  #grid-view { grid-template-columns: 1fr 100px; }
+  #grid-view { grid-template-columns: 1fr 110px; }
   #grid { grid-template-columns: repeat(4, 1fr); gap: 24px 12px; }
-  #grid-scroll { padding: 68px 12px 60px 50px; }
-  #sidebar { padding: 68px 12px 32px 8px; gap: 24px; }
+  #grid-scroll { padding: 20px 12px 60px 50px; }
+  #sidebar { padding: 20px 12px 32px 8px; gap: 24px; }
+  .side-link { font-size: 0.56rem; }
+  .v-char { font-size: 0.56rem; }
+  .clients-label, .client-name { font-size: 0.46rem; }
+}
+
+@media (max-width: 540px) {
+  #grid-scroll { padding-top: 20px; }
 }
 
 @media (max-width: 480px) {
-  #grid-view { grid-template-columns: 1fr 80px; }
+  #grid-view { grid-template-columns: 1fr 90px; }
   #grid { grid-template-columns: repeat(3, 1fr); gap: 20px 10px; }
-  #grid-scroll { padding: 80px 8px 48px 40px; }
-  #sidebar { padding: 80px 8px 32px 4px; gap: 20px; }
+  #grid-scroll { padding: 20px 8px 48px 40px; }
+  #sidebar { padding: 20px 8px 32px 4px; gap: 20px; }
   #side-nav { gap: 8px; }
-  .side-link { font-size: 0.55rem; }
+  .side-link { font-size: 0.5rem; }
+  .v-char { font-size: 0.5rem; }
+  .clients-label, .client-name { font-size: 0.44rem; }
   #root[data-state="detail"] #detail-view { grid-template-columns: 28% 72%; }
 }
 </style>
