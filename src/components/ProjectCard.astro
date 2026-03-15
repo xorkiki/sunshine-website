@@ -29,12 +29,12 @@ const { title, description, imageUrl, slug, tags } = Astro.props;
   <div class="pt-4 pb-2">
     <h3
       class="text-xl mb-1"
-      style="font-family: 'Cormorant Garamond', serif; font-weight: 400; color: #301d10;"
+      style="font-family: var(--font-serif); font-weight: 400; color: var(--color-brown);"
     >
       {title}
     </h3>
     {description && (
-      <p class="text-sm leading-relaxed line-clamp-2" style="color: #301d10; opacity: 0.7;">
+      <p class="text-sm leading-relaxed line-clamp-2" style="color: var(--color-brown); opacity: var(--opacity-visible);">
         {description}
       </p>
     )}
@@ -43,7 +43,7 @@ const { title, description, imageUrl, slug, tags } = Astro.props;
         {tags.map(tag => (
           <span
             class="text-xs px-2 py-1 border"
-            style="border-color: #a34a21; color: #a34a21; letter-spacing: 0.08em;"
+            style="border-color: var(--color-rust); color: var(--color-rust); letter-spacing: var(--letter-spacing-tight);"
           >
             {tag}
           </span>

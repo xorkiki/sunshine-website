@@ -3,6 +3,8 @@ import Base from '../layouts/Base.astro';
 import { sanityClient } from '../lib/sanity';
 
 let projects: any[] = [];
+let clients: string[] = [];
+
 try {
   projects = await sanityClient.fetch(`
     *[_type == "portfolioItem" && "photography" in category] | order(_createdAt desc) {
@@ -16,41 +18,70 @@ try {
   console.error('[photography] Sanity fetch failed:', e?.message);
 }
 
+try {
+  const about = await sanityClient.fetch(`*[_type == "aboutPage"][0] { clients }`);
+  clients = about?.clients || [];
+} catch (e) {}
+
 const projectsJson = JSON.stringify(projects);
+const PAGE_NAME = 'Sunzhique';
 ---
 
-<Base title="Photography" description="Photography by Sunzhique">
+<Base title="Photography" description="Photography by Sunzhique" verticalName={true} hideNavLinks={true}>
 <div id="root" data-state="default">
 
-  <!-- LEFT (empty column for grid spacing) -->
-  <div id="left"></div>
+  <!-- ── GRID VIEW ─────────────────────────────────── -->
+  <div id="grid-view">
 
-  <!-- IMAGE COLUMN (becomes thumbnail strip in detail state) -->
-  <div id="img-col">
-    {projects.map((p, i) => (
-      <div
-        class="proj-item"
-        data-index={String(i)}
-        data-title={p.title}
-        data-credits={p.credits || 'Photography: Sunzhique'}
-        data-desc={p.description || ''}
-      >
-        <img src={p.coverUrl} alt={p.title} loading={i < 3 ? 'eager' : 'lazy'} decoding="async" />
+    <!-- image grid (scrollable) -->
+    <div id="grid-scroll">
+      <div id="grid">
+        {projects.map((p, i) => (
+          <div
+            class="proj-item"
+            data-index={String(i)}
+            data-title={p.title}
+            data-desc={p.description || ''}
+          >
+            <div class="proj-img-wrap">
+              <img src={p.coverUrl} alt={p.title} loading={i < 12 ? 'eager' : 'lazy'} decoding="async" />
+            </div>
+            <div class="proj-info">
+              <p class="proj-title">{p.title}</p>
+              {p.description && <p class="proj-desc">{p.description}</p>}
+            </div>
+          </div>
+        ))}
       </div>
-    ))}
+    </div>
+
+    <!-- right sidebar (sticky) -->
+    <aside id="sidebar">
+      <nav id="side-nav">
+        <a href="/styling" class="side-link">Styling</a>
+        <a href="/photography" class="side-link active">Photography</a>
+        <a href="/about" class="side-link">About</a>
+      </nav>
+
+      {clients.length > 0 && (
+        <div id="clients-block">
+          <p class="clients-label">Clients</p>
+          {clients.map((c: string) => <p class="client-name">{c}</p>)}
+        </div>
+      )}
+    </aside>
+
   </div>
 
-  <!-- RIGHT: hover text or selected image -->
-  <div id="right">
-    <div id="hover-text">
-      <p id="ht-title"></p>
-      <p id="ht-credits"></p>
-      <p id="ht-desc"></p>
-      <p class="ht-cta">Read the full story</p>
+  <!-- ── DETAIL VIEW (overlay) ─────────────────────── -->
+  <div id="detail-view">
+    <div id="thumb-col"></div>
+    <div id="detail-right">
+      <img id="selected-img" src="" alt="" />
     </div>
-    <img id="selected-img" src="" alt="" />
-    <button id="close-btn">Close</button>
   </div>
+
+  <button id="close-btn">Close</button>
 
 </div>
 </Base>
@@ -59,243 +90,266 @@ const projectsJson = JSON.stringify(projects);
 const projects = JSON.parse(projectsJson);
 
 const root        = document.getElementById('root');
-const imgCol      = document.getElementById('img-col');
-const right       = document.getElementById('right');
-const hoverText   = document.getElementById('hover-text');
+const gridScroll  = document.getElementById('grid-scroll');
+const grid        = document.getElementById('grid');
+const thumbCol    = document.getElementById('thumb-col');
 const selectedImg = document.getElementById('selected-img');
 const closeBtn    = document.getElementById('close-btn');
-const htTitle     = document.getElementById('ht-title');
-const htCredits   = document.getElementById('ht-credits');
-const htDesc      = document.getElementById('ht-desc');
+const navLinks    = document.querySelector('.nav-links');
 
-let active = null; // { project, imgIndex }
+// ── PRELOAD IMAGE ──────────────────────────────────────
+function preloadImage(url) {
+  const link = document.createElement('link');
+  link.rel = 'preload';
+  link.as = 'image';
+  link.href = url;
+  document.head.appendChild(link);
+  return link;
+}
 
-// ── HOVER (default state only) ─────────────────────────
-imgCol.addEventListener('mouseover', e => {
-  if (root.dataset.state !== 'default') return;
-  const item = e.target.closest('.proj-item');
-  if (!item) { hoverText.classList.remove('visible'); return; }
-
-  htTitle.textContent   = item.dataset.title;
-  htCredits.textContent = item.dataset.credits;
-  htDesc.textContent    = item.dataset.desc;
-
-  // Align hover text to top of hovered image
-  const rpTop   = right.getBoundingClientRect().top;
-  const itemTop = item.getBoundingClientRect().top;
-  hoverText.style.top = (itemTop - rpTop) + 'px';
-  hoverText.classList.add('visible');
-});
-
-imgCol.addEventListener('mouseleave', () => {
-  hoverText.classList.remove('visible');
-});
-
-// ── CLICK ──────────────────────────────────────────────
-imgCol.addEventListener('click', e => {
+// ── CLICK (grid → detail) ──────────────────────────────
+const gridContainer = grid || gridScroll;
+gridContainer.addEventListener('click', e => {
+  // Don't handle clicks if already in detail view
+  if (root.dataset.state === 'detail') return;
+  
   const item = e.target.closest('.proj-item');
   if (!item) return;
 
   const pi = parseInt(item.dataset.index);
   const project = projects[pi];
-
-  if (root.dataset.state === 'detail') {
-    // Clicking a thumbnail switches the selected image
-    selectThumb(item, project.coverUrl);
-    return;
-  }
-
-  // Open detail: show all images of this project as thumbnails
   const images = project.images?.length ? project.images : [project.coverUrl];
 
-  // Replace img-col items with this project's images
-  imgCol.innerHTML = '';
+  // Preload all images in the project
+  images.forEach(url => preloadImage(url));
+
+  thumbCol.innerHTML = '';
   images.forEach((url, i) => {
     const div = document.createElement('div');
-    div.className = 'proj-item thumb' + (i === 0 ? ' is-selected' : '');
-    div.dataset.imgUrl = url;
+    div.className = 'thumb-item' + (i === 0 ? ' is-selected' : '');
     div.innerHTML = `<img src="${url}" loading="lazy" decoding="async" alt="" />`;
-    div.addEventListener('click', () => selectThumb(div, url));
-    imgCol.appendChild(div);
+    div.addEventListener('click', () => {
+      thumbCol.querySelectorAll('.thumb-item').forEach(t => t.classList.remove('is-selected'));
+      div.classList.add('is-selected');
+      preloadImage(url);
+      selectedImg.src = url;
+      selectedImg.loading = 'eager';
+    });
+    thumbCol.appendChild(div);
   });
 
-  // Show first image large
-  selectedImg.src = images[0];
   selectedImg.alt = project.title;
-
-  active = { project, imgIndex: 0 };
-
+  selectedImg.loading = 'eager';
+  selectedImg.src = images[0];
+  
   root.dataset.state = 'detail';
+  if (navLinks) { navLinks.style.opacity = '0'; navLinks.style.pointerEvents = 'none'; }
 });
-
-function selectThumb(thumbEl, url) {
-  imgCol.querySelectorAll('.proj-item').forEach(t => t.classList.remove('is-selected'));
-  thumbEl.classList.add('is-selected');
-  selectedImg.src = url;
-}
 
 // ── CLOSE ──────────────────────────────────────────────
 function closeDetail() {
-  root.dataset.state = 'closing';
-  // Restore project list
-  imgCol.innerHTML = '';
-  projects.forEach((p, i) => {
-    const div = document.createElement('div');
-    div.className = 'proj-item';
-    div.dataset.index  = String(i);
-    div.dataset.title  = p.title;
-    div.dataset.credits= p.credits || 'Photography: Sunzhique';
-    div.dataset.desc   = p.description || '';
-    div.innerHTML = `<img src="${p.coverUrl}" loading="lazy" decoding="async" alt="${p.title}" />`;
-    imgCol.appendChild(div);
-  });
-  active = null;
-  // Small delay so grid transition plays before re-attaching hover
-  setTimeout(() => { root.dataset.state = 'default'; }, 50);
+  root.dataset.state = 'default';
+  thumbCol.innerHTML = '';
+  if (navLinks) { navLinks.style.opacity = ''; navLinks.style.pointerEvents = ''; }
 }
 
 closeBtn.addEventListener('click', closeDetail);
-
-// Scroll image col to start slightly above fold
-imgCol.scrollTop = 56;
 </script>
 
 <style>
-/* ── ROOT GRID ───────────────────────────────────── */
-#root {
+/* ── ROOT ────────────────────────────────────────── */
+#root { height: 100%; position: relative; }
+
+/* ── GRID VIEW ───────────────────────────────────── */
+#grid-view {
   display: grid;
+  grid-template-columns: 1fr 140px;
   height: 100vh;
-  overflow: hidden;
 }
 
-#root[data-state="default"],
-#root[data-state="closing"] {
-  grid-template-columns: 40% 20% 40%;
-  transition: grid-template-columns 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-#root[data-state="detail"] {
-  grid-template-columns: 30% 7% 63%;
-  transition: grid-template-columns 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* ── LEFT ────────────────────────────────────────── */
-#left {
-  position: relative;
-  height: 100vh;
-  display: flex;
-  align-items: center;
-  padding: 0 0 0 48px;
-  overflow: hidden;
-}
-
-
-/* ── IMAGE COLUMN ────────────────────────────────── */
-#img-col {
+/* ── SCROLLABLE GRID AREA ────────────────────────── */
+#grid-scroll {
   overflow-y: auto;
   overflow-x: hidden;
   scrollbar-width: none;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding-bottom: 80px;
-  height: 100vh;
+  padding: var(--spacing-15xl) var(--spacing-9xl) var(--spacing-16xl) var(--spacing-14xl);
 }
 
-#img-col::-webkit-scrollbar { display: none; }
+#grid-scroll::-webkit-scrollbar { display: none; }
 
-.proj-item {
-  cursor: pointer;
-  flex-shrink: 0;
-  overflow: hidden;
-  transition: opacity 0.25s ease;
+#grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: var(--spacing-11xl) var(--spacing-2xl);
+  align-items: end;
 }
 
-.proj-item img {
+/* ── GRID ITEMS ──────────────────────────────────── */
+.proj-item { cursor: pointer; }
+
+.proj-img-wrap img {
   width: 100%;
   height: auto;
   display: block;
-  transition: opacity 0.25s ease;
-}
-
-/* Thumbnail state */
-#root[data-state="detail"] .proj-item img {
-  aspect-ratio: 4/3;
-  object-fit: cover;
-}
-
-.proj-item:hover { opacity: 0.8; }
-
-.proj-item.is-selected {
-  outline: 1.5px solid #a34a21;
-  outline-offset: -1px;
-  opacity: 1;
-}
-
-/* ── RIGHT ───────────────────────────────────────── */
-#right {
-  position: relative;
-  height: 100vh;
-  overflow: hidden;
-}
-
-/* ── HOVER TEXT ──────────────────────────────────── */
-#hover-text {
-  position: absolute;
-  top: 0;
-  left: 28px;
-  width: 200px;
-  opacity: 0;
-  pointer-events: none;
   transition: opacity 0.2s ease;
+}
+
+.proj-item:hover .proj-img-wrap img { opacity: var(--opacity-hover); }
+
+.proj-info { margin-top: 5px; }
+
+.proj-title {
+  font-size: var(--font-size-sm);
+  font-weight: 400;
+  color: #000000;
+  margin: 0 0 2px;
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: var(--font-sans);
+}
+
+.proj-desc {
+  font-size: var(--font-size-xs);
+  color: var(--color-brown);
+  opacity: var(--opacity-default);
+  margin: 0;
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: var(--font-sans);
+}
+
+/* ── RIGHT SIDEBAR ───────────────────────────────── */
+#sidebar {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  scrollbar-width: none;
+  padding: var(--spacing-2xl) var(--spacing-4xl) var(--spacing-7xl) var(--spacing-xl);
   display: flex;
   flex-direction: column;
+  align-items: flex-end;
+  gap: var(--spacing-6xl);
+}
+
+#sidebar::-webkit-scrollbar { display: none; }
+
+#page-name-vert {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   gap: 3px;
-  z-index: 2;
 }
 
-#hover-text.visible { opacity: 1; }
-
-#root[data-state="detail"] #hover-text,
-#root[data-state="closing"] #hover-text { display: none; }
-
-#ht-title {
-  font-size: 0.88rem;
+.v-char {
+  font-size: var(--font-size-md);
+  letter-spacing: var(--letter-spacing-wider);
+  color: var(--color-brown);
+  opacity: var(--opacity-very-subtle);
+  line-height: 1;
+  font-family: var(--font-sans);
   font-weight: 400;
-  color: #301d10;
-  margin: 0;
 }
 
-#ht-credits {
-  font-size: 0.7rem;
-  color: #301d10;
-  opacity: 0.5;
+#side-nav {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--spacing-base);
+}
+
+.side-link {
+  font-size: var(--font-size-md);
+  letter-spacing: var(--letter-spacing-normal);
+  text-transform: uppercase;
+  color: var(--color-brown);
+  opacity: var(--opacity-muted);
+  text-decoration: none;
+  font-family: var(--font-sans);
+  transition: opacity 0.2s;
+  white-space: nowrap;
+}
+
+.side-link:hover { opacity: var(--opacity-prominent); }
+.side-link.active { opacity: var(--opacity-prominent); }
+
+#clients-block {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--spacing-sm);
+}
+
+.clients-label {
+  font-size: var(--font-size-sm);
+  letter-spacing: var(--letter-spacing-wide);
+  text-transform: uppercase;
+  color: var(--color-brown);
+  opacity: var(--opacity-subtle);
+  margin: 0 0 var(--spacing-xs);
+  font-family: var(--font-sans);
+}
+
+.client-name {
+  font-size: var(--font-size-base);
+  letter-spacing: var(--letter-spacing-tight);
+  color: var(--color-brown);
+  opacity: var(--opacity-medium);
   margin: 0;
+  font-family: var(--font-sans);
   line-height: 1.5;
+  text-align: right;
 }
 
-#ht-desc {
-  font-size: 0.7rem;
-  line-height: 1.7;
-  color: #301d10;
-  opacity: 0.55;
-  margin: 6px 0 8px;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+/* ── DETAIL VIEW (fixed overlay) ─────────────────── */
+#detail-view {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: var(--color-cream);
+  z-index: 50;
 }
 
-.ht-cta {
-  font-size: 0.65rem;
-  color: #301d10;
-  opacity: 0.35;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-  margin: 0;
+#root[data-state="detail"] #detail-view {
+  display: grid;
+  grid-template-columns: 14% 86%;
 }
 
-/* ── SELECTED IMAGE ──────────────────────────────── */
+#thumb-col {
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: none;
+  padding: var(--spacing-12xl) var(--spacing-lg) var(--spacing-12xl);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+#thumb-col::-webkit-scrollbar { display: none; }
+
+.thumb-item {
+  cursor: pointer;
+  opacity: var(--opacity-soft);
+  transition: opacity 0.2s ease;
+  flex-shrink: 0;
+}
+
+.thumb-item:hover { opacity: var(--opacity-active); }
+
+.thumb-item.is-selected {
+  opacity: var(--opacity-full);
+  outline: 1.5px solid var(--color-rust);
+  outline-offset: -1px;
+}
+
+.thumb-item img { width: 100%; height: auto; display: block; }
+
+#detail-right { position: relative; overflow: hidden; }
+
 #selected-img {
   position: absolute;
   inset: 0;
@@ -303,39 +357,59 @@ imgCol.scrollTop = 56;
   height: 100%;
   object-fit: contain;
   object-position: center;
-  padding: 32px 24px;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.45s ease;
-}
-
-#root[data-state="detail"] #selected-img {
-  opacity: 1;
-  pointer-events: auto;
+  padding: var(--spacing-7xl) var(--spacing-7xl) var(--spacing-7xl) var(--spacing-3xl);
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: auto;
 }
 
 /* ── CLOSE BTN ───────────────────────────────────── */
 #close-btn {
   position: fixed;
-  top: 20px;
-  right: 28px;
+  top: var(--spacing-2xl);
+  right: var(--spacing-5xl);
   background: none;
   border: none;
-  font-size: 0.65rem;
-  letter-spacing: 0.15em;
+  font-size: var(--font-size-lg);
+  letter-spacing: var(--letter-spacing-wide);
   text-transform: uppercase;
-  color: #301d10;
+  color: var(--color-brown);
   cursor: pointer;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.3s ease 0.3s;
+  transition: opacity 0.25s ease;
   z-index: 200;
+  padding: 0;
+  font-family: var(--font-sans);
 }
 
-#close-btn:hover { opacity: 0.6 !important; }
+#close-btn:hover { opacity: var(--opacity-strong) !important; }
 
 #root[data-state="detail"] #close-btn {
-  opacity: 0.4;
+  opacity: var(--opacity-muted);
   pointer-events: auto;
+}
+
+/* ── RESPONSIVE ──────────────────────────────────── */
+@media (max-width: 1280px) {
+  #grid { grid-template-columns: repeat(6, 1fr); gap: var(--spacing-10xl) var(--spacing-2xl); }
+}
+
+@media (max-width: 1024px) {
+  #grid { grid-template-columns: repeat(5, 1fr); gap: var(--spacing-8xl) var(--spacing-lg); }
+  #grid-scroll { padding: var(--spacing-14xl) var(--spacing-6xl) var(--spacing-15xl) var(--spacing-9xl); }
+  #sidebar { padding: var(--spacing-14xl) var(--spacing-2xl) var(--spacing-5xl) var(--spacing-lg); }
+}
+
+@media (max-width: 768px) {
+  #grid-view { grid-template-columns: 1fr; }
+  #sidebar { display: none; }
+  #grid { grid-template-columns: repeat(3, 1fr); gap: var(--spacing-6xl) var(--spacing-base); }
+  #grid-scroll { padding: var(--spacing-13xl) var(--spacing-3xl) var(--spacing-11xl); }
+}
+
+@media (max-width: 480px) {
+  #grid { grid-template-columns: repeat(2, 1fr); gap: var(--spacing-3xl) var(--spacing-lg); }
+  #grid-scroll { padding: var(--spacing-11xl) var(--spacing-xl) var(--spacing-9xl); }
+  #root[data-state="detail"] #detail-view { grid-template-columns: 28% 72%; }
 }
 </style>

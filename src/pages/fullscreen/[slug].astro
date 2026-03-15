@@ -58,7 +58,7 @@ const tags: string[] = project?.tags || [];
     <a
       href="/portfolio"
       class="inline-flex items-center gap-2 text-xs tracking-widest uppercase mb-10 transition-colors"
-      style="color: #a34a21; letter-spacing: 0.15em;"
+      style="color: var(--color-rust); letter-spacing: var(--letter-spacing-wide);"
     >
       <span>&larr;</span> Back to Portfolio
     </a>
@@ -66,7 +66,7 @@ const tags: string[] = project?.tags || [];
     <!-- Title -->
     <h1
       class="text-5xl font-light mb-3"
-      style="font-family: 'Cormorant Garamond', serif; color: #301d10;"
+      style="font-family: var(--font-serif); color: var(--color-brown);"
     >
       {title}
     </h1>
@@ -76,7 +76,7 @@ const tags: string[] = project?.tags || [];
         {tags.map((tag: string) => (
           <span
             class="text-xs px-2 py-1 border"
-            style="border-color: #a34a21; color: #a34a21; letter-spacing: 0.08em;"
+            style="border-color: var(--color-rust); color: var(--color-rust); letter-spacing: var(--letter-spacing-tight);"
           >
             {tag}
           </span>
@@ -85,7 +85,7 @@ const tags: string[] = project?.tags || [];
     )}
 
     {description && (
-      <p class="text-lg mb-12 max-w-2xl leading-relaxed" style="color: #301d10; opacity: 0.75; font-family: 'Cormorant Garamond', serif;">
+      <p class="text-lg mb-12 max-w-2xl leading-relaxed" style="color: var(--color-brown); opacity: var(--opacity-active); font-family: var(--font-serif);">
         {description}
       </p>
     )}

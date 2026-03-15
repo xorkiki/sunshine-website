@@ -9,6 +9,63 @@
   --color-cream-dark: #ede7e0;
   --font-serif: 'Cormorant Garamond', Georgia, serif;
   --font-sans: 'DIN Next', 'DIN', ui-sans-serif, system-ui, sans-serif;
+
+  /* ── OPACITY SCALE ───────────────────────────────── */
+  --opacity-subtle: 0.3;
+  --opacity-very-subtle: 0.35;
+  --opacity-muted: 0.4;
+  --opacity-default: 0.45;
+  --opacity-medium: 0.5;
+  --opacity-soft: 0.55;
+  --opacity-visible: 0.6;
+  --opacity-strong: 0.65;
+  --opacity-hover: 0.72;
+  --opacity-masonry-hover: 0.92;
+  --opacity-active: 0.8;
+  --opacity-prominent: 0.9;
+  --opacity-full: 1;
+
+  /* ── SPACING SCALE ───────────────────────────────── */
+  --spacing-xs: 4px;
+  --spacing-sm: 6px;
+  --spacing-md: 8px;
+  --spacing-base: 10px;
+  --spacing-lg: 12px;
+  --spacing-xl: 16px;
+  --spacing-2xl: 20px;
+  --spacing-3xl: 24px;
+  --spacing-4xl: 28px;
+  --spacing-5xl: 32px;
+  --spacing-6xl: 36px;
+  --spacing-7xl: 40px;
+  --spacing-8xl: 44px;
+  --spacing-9xl: 48px;
+  --spacing-10xl: 52px;
+  --spacing-11xl: 60px;
+  --spacing-12xl: 64px;
+  --spacing-13xl: 68px;
+  --spacing-14xl: 72px;
+  --spacing-15xl: 80px;
+  --spacing-16xl: 100px;
+
+  /* ── TYPOGRAPHY SCALE ────────────────────────────── */
+  /* Font Sizes */
+  --font-size-xs: 0.5rem;
+  --font-size-sm: 0.54rem;
+  --font-size-base: 0.58rem;
+  --font-size-md: 0.62rem;
+  --font-size-lg: 0.65rem;
+  --font-size-xl: 0.68rem;
+  --font-size-2xl: 0.7rem;
+  --font-size-3xl: 1.05rem;
+  --font-size-4xl: 1.2rem;
+  --font-size-5xl: 1.5rem;
+
+  /* Letter Spacing */
+  --letter-spacing-tight: 0.08em;
+  --letter-spacing-normal: 0.12em;
+  --letter-spacing-wide: 0.15em;
+  --letter-spacing-wider: 0.18em;
 }
 
 *, *::before, *::after {
@@ -32,35 +89,38 @@ h1, h2, h3, h4, h5, h6 {
   font-weight: 400;
 }
 
-/* Page transition */
-.page-transition {
-  animation: fadeSlideIn 0.6s ease forwards;
+/* ── VIEW TRANSITIONS ────────────────────────────── */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 
-@keyframes fadeSlideIn {
-  from {
-    opacity: 0;
-    transform: translateY(16px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+@keyframes fade-out {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+::view-transition-old(root) {
+  animation: 280ms ease both fade-out;
+}
+
+::view-transition-new(root) {
+  animation: 320ms ease both fade-in;
 }
 
 /* PhotoSwipe custom overrides */
 .pswp {
-  --pswp-bg: #301d10;
+  --pswp-bg: var(--color-brown);
 }
 
 /* Masonry grid */
 .masonry-grid {
-  column-gap: 12px;
+  column-gap: var(--spacing-lg);
 }
 
 .masonry-item {
   break-inside: avoid;
-  margin-bottom: 12px;
+  margin-bottom: var(--spacing-lg);
   cursor: pointer;
   overflow: hidden;
   border-radius: 2px;
@@ -75,5 +135,9 @@ h1, h2, h3, h4, h5, h6 {
 
 .masonry-item:hover img {
   transform: scale(1.03);
-  opacity: 0.92;
+  opacity: var(--opacity-masonry-hover);
+}
+
+.nav-links {
+  transition: opacity 0.3s ease;
 }

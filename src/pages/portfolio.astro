@@ -52,11 +52,11 @@ try {
     <!-- Heading -->
     <h1
       class="text-5xl font-light mb-2 tracking-wide"
-      style="font-family: 'Cormorant Garamond', serif; color: #301d10;"
+      style="font-family: var(--font-serif); color: var(--color-brown);"
     >
       Portfolio
     </h1>
-    <p class="text-sm tracking-widest uppercase mb-12" style="color: #a34a21; letter-spacing: 0.15em;">
+    <p class="text-sm tracking-widest uppercase mb-12" style="color: var(--color-rust); letter-spacing: var(--letter-spacing-wide);">
       Selected Works
     </p>
 
@@ -74,7 +74,7 @@ try {
     </div>
 
     {projects.length === 0 && (
-      <p class="text-center py-20" style="color: #301d10; opacity: 0.4; font-style: italic; font-family: 'Cormorant Garamond', serif; font-size: 1.2rem;">
+      <p class="text-center py-20" style="color: var(--color-brown); opacity: var(--opacity-muted); font-style: italic; font-family: var(--font-serif); font-size: var(--font-size-4xl);">
         Portfolio coming soon.
       </p>
     )}

@@ -1,13 +1,16 @@
 ---
 import '../styles/global.css';
+import { ClientRouter } from 'astro:transitions';
 
 export interface Props {
   title?: string;
   description?: string;
   hideName?: boolean;
+  verticalName?: boolean;
+  hideNavLinks?: boolean;
 }
 
-const { title = 'Sunzhique', description = 'Photography & Portfolio', hideName = false } = Astro.props;
+const { title = 'Sunzhique', description = 'Photography & Portfolio', hideName = false, verticalName = false, hideNavLinks = false } = Astro.props;
 const currentPath = Astro.url.pathname;
 ---
 
@@ -19,6 +22,7 @@ const currentPath = Astro.url.pathname;
     <meta name="description" content={description} />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>{title} — Sunzhique</title>
+    <ClientRouter />
     <meta property="og:title" content={`${title} — Sunzhique`} />
     <meta property="og:description" content={description} />
     <meta property="og:image" content="/og-image.svg" />
@@ -30,15 +34,17 @@ const currentPath = Astro.url.pathname;
 
     <nav id="site-nav">
       {!hideName && (
-        <a href="/" class="nav-name">Sunzhique</a>
+        <a href="/" class={`nav-name${verticalName ? ' nav-name-vertical' : ''}`}>Sunzhique</a>
       )}
       {hideName && <span class="nav-name-placeholder" />}
 
-      <div class="nav-links">
-        <a href="/styling" class={`nav-link ${currentPath === '/styling' ? 'active' : ''}`}>Styling</a>
-        <a href="/photography" class={`nav-link ${currentPath === '/photography' ? 'active' : ''}`}>Photography</a>
-        <a href="/about" class={`nav-link ${currentPath === '/about' ? 'active' : ''}`}>About</a>
-      </div>
+      {!hideNavLinks && (
+        <div class="nav-links">
+          <a href="/styling" class={`nav-link ${currentPath === '/styling' ? 'active' : ''}`}>Styling</a>
+          <a href="/photography" class={`nav-link ${currentPath === '/photography' ? 'active' : ''}`}>Photography</a>
+          <a href="/about" class={`nav-link ${currentPath === '/about' ? 'active' : ''}`}>About</a>
+        </div>
+      )}
     </nav>
 
     <main>
@@ -50,8 +56,8 @@ const currentPath = Astro.url.pathname;
 
 <style>
   body {
-    background-color: #f8f4f1;
-    color: #301d10;
+    background-color: var(--color-cream);
+    color: var(--color-brown);
     margin: 0;
     overflow: hidden;
     height: 100vh;
@@ -69,7 +75,7 @@ const currentPath = Astro.url.pathname;
     left: 0;
     right: 0;
     z-index: 100;
-    padding: 20px 32px;
+    padding: var(--spacing-2xl) var(--spacing-5xl);
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -77,15 +83,31 @@ const currentPath = Astro.url.pathname;
   }
 
   .nav-name {
-    font-family: ui-sans-serif, system-ui, sans-serif;
+    font-family: var(--font-sans);
     font-weight: 600;
-    font-size: 1.05rem;
-    letter-spacing: 0.18em;
+    font-size: var(--font-size-3xl);
+    letter-spacing: var(--letter-spacing-wider);
     text-transform: uppercase;
     text-decoration: none;
-    color: #301d10;
+    color: var(--color-brown);
     pointer-events: auto;
     white-space: nowrap;
+  }
+
+  .nav-name-vertical {
+    writing-mode: vertical-lr;
+    text-orientation: upright;
+    position: fixed;
+    left: var(--spacing-5xl);
+    top: var(--spacing-2xl);
+    font-family: var(--font-sans);
+    font-weight: 600;
+    font-size: 0.78rem;
+    letter-spacing: var(--letter-spacing-wider);
+    text-transform: uppercase;
+    text-decoration: none;
+    color: var(--color-brown);
+    pointer-events: auto;
   }
 
   .nav-name-placeholder {
@@ -95,31 +117,31 @@ const currentPath = Astro.url.pathname;
   .nav-links {
     display: flex;
     align-items: center;
-    gap: 36px;
+    gap: var(--spacing-6xl);
     pointer-events: auto;
   }
 
   .nav-link {
-    font-family: ui-sans-serif, system-ui, sans-serif;
-    font-size: 0.68rem;
-    letter-spacing: 0.15em;
+    font-family: var(--font-sans);
+    font-size: var(--font-size-md);
+    letter-spacing: var(--letter-spacing-normal);
     text-transform: uppercase;
     text-decoration: none;
     font-weight: 400;
-    color: #301d10;
-    opacity: 0.55;
+    color: var(--color-brown);
+    opacity: var(--opacity-muted);
     white-space: nowrap;
     transition: opacity 0.2s;
   }
 
-  .nav-link:hover { opacity: 1; }
-  .nav-link.active { opacity: 1; }
+  .nav-link:hover { opacity: var(--opacity-prominent); }
+  .nav-link.active { opacity: var(--opacity-prominent); }
 
   /* ── RESPONSIVE ──────────────────────────────── */
 
   @media (max-width: 720px) and (min-width: 541px) {
-    .nav-links { gap: 20px; }
-    .nav-link { font-size: 0.62rem; }
+    .nav-links { gap: var(--spacing-2xl); }
+    .nav-link { font-size: var(--font-size-md); }
   }
 
   @media (max-width: 540px) {
@@ -127,7 +149,7 @@ const currentPath = Astro.url.pathname;
     .nav-links {
       flex-direction: column;
       align-items: flex-end;
-      gap: 8px;
+      gap: var(--spacing-md);
     }
   }
 </style>
