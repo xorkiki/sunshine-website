@@ -129,6 +129,10 @@ function clearHover() {
   hoverText.classList.remove('visible');
   hoverText.style.top = '';
   hoverText.style.left = '';
+  // Clear text content to prevent stale text from appearing at (0,0) if a timeout executes
+  htTitle.textContent = '';
+  htCredits.textContent = '';
+  htDesc.textContent = '';
 }
 
 imgCol.addEventListener('mouseover', e => {
@@ -175,13 +179,15 @@ imgCol.addEventListener('mouseover', e => {
     item.classList.add('is-hovered');
   }
 
-  htTitle.textContent   = item.dataset.title;
-  htCredits.textContent = item.dataset.credits;
-  htDesc.textContent    = item.dataset.desc;
-
   // Wait for padding transition to finish before positioning hover text
+  // Set text content inside timeout to ensure it's only set when we're actually showing it
   hoverTimeout = setTimeout(() => {
     if (hoveredItem !== item) return;
+    
+    // Set text content only when we're about to show it
+    htTitle.textContent   = item.dataset.title;
+    htCredits.textContent = item.dataset.credits;
+    htDesc.textContent    = item.dataset.desc;
     const imgEl    = item.querySelector('img');
     const imgRect  = imgEl.getBoundingClientRect();
     const textH    = hoverText.offsetHeight;
@@ -204,9 +210,26 @@ imgCol.addEventListener('mouseover', e => {
       topPosition = imgRect.bottom + 5;
     }
     
+    // Double-check that hoveredItem still matches before setting position
+    if (hoveredItem !== item) return;
+    
     hoverText.style.top  = topPosition + 'px';
     hoverText.style.left = imgRect.left + 'px';
-    hoverText.classList.add('visible');
+    
+    // Verify position was set correctly before making visible
+    // Use requestAnimationFrame to ensure position is applied before adding visible class
+    requestAnimationFrame(() => {
+      // Final guard check - ensure we're still hovering the same item
+      if (hoveredItem !== item) return;
+      
+      // Verify position is actually set (not empty string which would fall back to CSS default 0,0)
+      // If clearHover() was called, it would have cleared these styles, making them empty strings
+      const currentLeft = hoverText.style.left;
+      const currentTop = hoverText.style.top;
+      if (currentLeft && currentTop) {
+        hoverText.classList.add('visible');
+      }
+    });
     hoverTimeout = null;
   }, 300);
 });
@@ -240,12 +263,24 @@ imgCol.addEventListener('click', e => {
   root.dataset.state = 'detail';
   if (navLinks) { navLinks.style.opacity = '0'; navLinks.style.pointerEvents = 'none'; }
   homeNav.style.display = 'none';
+  // Reset close button styles so CSS can control it
+  if (closeBtn) {
+    closeBtn.style.display = '';
+    closeBtn.style.opacity = '';
+    closeBtn.style.pointerEvents = '';
+  }
 });
 
 // ── CLOSE ──────────────────────────────────────────────
 function closeDetail() {
   imgCol.querySelectorAll('.proj-item').forEach(t => t.classList.remove('is-selected'));
   active = null;
+  // Immediately hide close button to prevent overlap
+  if (closeBtn) {
+    closeBtn.style.opacity = '0';
+    closeBtn.style.pointerEvents = 'none';
+    closeBtn.style.display = 'none';
+  }
   root.dataset.state = 'closing';
   if (navLinks) { navLinks.style.opacity = ''; navLinks.style.pointerEvents = ''; }
   homeNav.style.display = '';
@@ -472,6 +507,12 @@ imgCol.parentElement.addEventListener('touchmove', e => {
   pointer-events: auto;
 }
 
+#root[data-state="closing"] #close-btn,
+#root[data-state="default"] #close-btn {
+  opacity: 0;
+  pointer-events: none;
+}
+
 /* ── HOME NAV ────────────────────────────────────── */
 #home-nav {
   position: fixed;
@@ -500,5 +541,34 @@ imgCol.parentElement.addEventListener('touchmove', e => {
 .home-nav-link:hover { opacity: var(--opacity-prominent); }
 
 #root[data-state="detail"] ~ #home-nav { display: none; }
+
+/* ── MOBILE STYLES ──────────────────────────────────── */
+@media (max-width: 768px) {
+  /* Make images smaller and move them right by 10% */
+  #root[data-state="default"],
+  #root[data-state="closing"],
+  #root[data-state="detail"] {
+    grid-template-columns: minmax(0, 0) 120px 1fr;
+  }
+
+  #left {
+    padding: 0;
+  }
+
+  #img-col {
+    transform: translateX(10%);
+    padding-left: var(--spacing-5xl);
+  }
+
+  /* Hide close button immediately on mobile to prevent overlap */
+  #close-btn {
+    transition: opacity 0s;
+  }
+
+  #root[data-state="closing"] #close-btn,
+  #root[data-state="default"] #close-btn {
+    display: none;
+  }
+}
 
 </style>
