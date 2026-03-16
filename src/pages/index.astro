@@ -401,9 +401,20 @@ imgCol.parentElement.addEventListener('touchmove', e => {
 .proj-item.is-hovered { opacity: var(--opacity-active); }
 
 .proj-item.is-selected {
-  outline: 1.5px solid var(--color-rust);
-  outline-offset: -1px;
   opacity: var(--opacity-full);
+}
+
+/* Remove all outlines from interactive elements */
+.proj-item,
+.proj-item:focus,
+.proj-item:active,
+#close-btn,
+#close-btn:focus,
+#close-btn:active,
+.home-nav-link,
+.home-nav-link:focus,
+.home-nav-link:active {
+  outline: none;
 }
 
 /* ── RIGHT ───────────────────────────────────────── */
